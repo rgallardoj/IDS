@@ -1,26 +1,155 @@
-CREATE SCHEMA `cgg` ;
+CREATE SCHEMA IF NOT EXISTS `cgg` DEFAULT CHARACTER SET latin1 ;
+USE `cgg` ;
 
+-- -----------------------------------------------------
+-- Table `cgg`.`perfil`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`perfil` (
+  `idperfil` INT(5) NOT NULL,
+  `descripcion` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`idperfil`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`usuario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`usuario` (
+  `rut` INT(9) NOT NULL,
+  `pass` VARCHAR(20) NOT NULL,
+  `nombre` VARCHAR(45) NOT NULL,
+  `apellido_paterno` VARCHAR(45) NOT NULL,
+  `apellido_materno` VARCHAR(45) NOT NULL,
+  `direccion` VARCHAR(45) NOT NULL,
+  `numCasa` INT(10) NOT NULL,
+  `perfil_idperfil` INT(5) NOT NULL,
+  `comunas_comuna_id` INT(11) NOT NULL,
+  `activo` BIT NOT NULL,
+  PRIMARY KEY (`rut`),
+  INDEX `fk_usuario_perfil1_idx` (`perfil_idperfil` ASC),
+  INDEX `fk_usuario_comunas1_idx` (`comunas_comuna_id` ASC),
+  CONSTRAINT `fk_usuario_perfil1`
+    FOREIGN KEY (`perfil_idperfil`)
+    REFERENCES `cgg`.`perfil` (`idperfil`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_usuario_comunas1`
+    FOREIGN KEY (`comunas_comuna_id`)
+    REFERENCES `cgg`.`comunas` (`comuna_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipodeuda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`tipodeuda` (
+  `idtipodeuda` INT NOT NULL,
+  `descripcion` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`idtipodeuda`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`deuda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`deuda` (
+  `iddeuda` INT NOT NULL AUTO_INCREMENT,
+  `usuario_rut` INT(9) NOT NULL,
+  `tipodeuda_idtipodeuda` INT NOT NULL,
+  `fechaIngreso` DATETIME NOT NULL,
+  `estadoDeuda` BIT NOT NULL,
+  PRIMARY KEY (`iddeuda`),
+  INDEX `fk_deuda_usuario1_idx` (`usuario_rut` ASC),
+  INDEX `fk_deuda_tipodeuda1_idx` (`tipodeuda_idtipodeuda` ASC),
+  CONSTRAINT `fk_deuda_usuario1`
+    FOREIGN KEY (`usuario_rut`)
+    REFERENCES `cgg`.`usuario` (`rut`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_deuda_tipodeuda1`
+    FOREIGN KEY (`tipodeuda_idtipodeuda`)
+    REFERENCES `cgg`.`tipodeuda` (`idtipodeuda`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`detalledeuda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`detalledeuda` (
+  `iddetalledeuda` INT NOT NULL AUTO_INCREMENT,
+  `deuda_iddeuda` INT NOT NULL,
+  `fechaIngreso` DATETIME NOT NULL,
+  `fechaPago` DATETIME NULL,
+  `valorCuota` INT NOT NULL,
+  `valorPagado` INT NULL,
+  `estadoPago` BIT NULL,
+  `numCuota` INT NULL,
+  PRIMARY KEY (`iddetalledeuda`),
+  INDEX `fk_detalledeuda_deuda1_idx` (`deuda_iddeuda` ASC),
+  CONSTRAINT `fk_detalledeuda_deuda1`
+    FOREIGN KEY (`deuda_iddeuda`)
+    REFERENCES `cgg`.`deuda` (`iddeuda`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipoIngreso`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`tipoIngreso` (
+  `idtipoIngreso` INT NOT NULL AUTO_INCREMENT,
+  `descripcion` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`idtipoIngreso`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`ingreso`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`ingreso` (
+  `idingreso` INT NOT NULL AUTO_INCREMENT,
+  `montoIngreso` INT NOT NULL,
+  `comentario` VARCHAR(45) NULL,
+  `usuario_rut` INT(9) NOT NULL,
+  `tipoIngreso_idtipoIngreso` INT NOT NULL,
+  PRIMARY KEY (`idingreso`),
+  INDEX `fk_ingreso_usuario1_idx` (`usuario_rut` ASC),
+  INDEX `fk_ingreso_tipoIngreso1_idx` (`tipoIngreso_idtipoIngreso` ASC),
+  CONSTRAINT `fk_ingreso_usuario1`
+    FOREIGN KEY (`usuario_rut`)
+    REFERENCES `cgg`.`usuario` (`rut`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_ingreso_tipoIngreso1`
+    FOREIGN KEY (`tipoIngreso_idtipoIngreso`)
+    REFERENCES `cgg`.`tipoIngreso` (`idtipoIngreso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
 -- 
 -- Comunas
 --
-DROP TABLE IF EXISTS `comunas`;
-CREATE TABLE `comunas` (
+CREATE TABLE IF NOT EXISTS `cgg`.`comunas`
+(
   `comuna_id` int(11) NOT NULL AUTO_INCREMENT,
   `comuna_nombre` varchar(64) NOT NULL,
   `provincia_id` int(11) NOT NULL,
   PRIMARY KEY (`comuna_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=346 DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `provincias`;
-CREATE TABLE `provincias` (
+CREATE TABLE IF NOT EXISTS `cgg`.`provincias` (
   `provincia_id` int(11) NOT NULL AUTO_INCREMENT,
   `provincia_nombre` varchar(64) NOT NULL,
   `region_id` int(11) NOT NULL,
   PRIMARY KEY (`provincia_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=54 DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `regiones`;
-CREATE TABLE `regiones` (
+CREATE TABLE IF NOT EXISTS `cgg`.`regiones` (
   `region_id` int(11) NOT NULL AUTO_INCREMENT,
   `region_nombre` varchar(64) NOT NULL,
   `region_ordinal` varchar(4) NOT NULL,
