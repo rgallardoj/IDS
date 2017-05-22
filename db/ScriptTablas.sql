@@ -1,5 +1,44 @@
+
 CREATE SCHEMA IF NOT EXISTS `cgg` DEFAULT CHARACTER SET latin1 ;
 USE `cgg` ;
+
+-- -----------------------------------------------------
+-- Table `cgg`.`regiones`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`regiones` (
+  `region_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `region_nombre` VARCHAR(64) NOT NULL,
+  `region_ordinal` VARCHAR(4) NOT NULL,
+  PRIMARY KEY (`region_id`))
+ENGINE = MyISAM
+AUTO_INCREMENT = 16
+DEFAULT CHARACTER SET = utf8;
+
+-- -----------------------------------------------------
+-- Table `cgg`.`provincias`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`provincias` (
+  `provincia_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `provincia_nombre` VARCHAR(64) NOT NULL,
+  `region_id` INT(11) NOT NULL,
+  PRIMARY KEY (`provincia_id`),
+  INDEX `fk_provincias_regiones1_idx` (`region_id` ASC))
+ENGINE = MyISAM
+AUTO_INCREMENT = 54
+DEFAULT CHARACTER SET = utf8;
+
+-- -----------------------------------------------------
+-- Table `cgg`.`comunas`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`comunas` (
+  `comuna_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `comuna_nombre` VARCHAR(64) NOT NULL,
+  `provincia_id` INT(11) NOT NULL,
+  PRIMARY KEY (`comuna_id`),
+  INDEX `fk_comunas_provincias1_idx` (`provincia_id` ASC))
+ENGINE = MyISAM
+AUTO_INCREMENT = 346
+DEFAULT CHARACTER SET = utf8;
 
 -- -----------------------------------------------------
 -- Table `cgg`.`perfil`
@@ -9,7 +48,6 @@ CREATE TABLE IF NOT EXISTS `cgg`.`perfil` (
   `descripcion` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`idperfil`))
 ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `cgg`.`usuario`
@@ -22,24 +60,14 @@ CREATE TABLE IF NOT EXISTS `cgg`.`usuario` (
   `apellido_materno` VARCHAR(45) NOT NULL,
   `direccion` VARCHAR(45) NOT NULL,
   `numCasa` INT(10) NOT NULL,
-  `perfil_idperfil` INT(5) NOT NULL,
-  `comunas_comuna_id` INT(11) NOT NULL,
+  `idperfil` INT(5) NOT NULL,
+  `comuna_id` INT(11) NOT NULL,
   `activo` BIT NOT NULL,
   PRIMARY KEY (`rut`),
-  INDEX `fk_usuario_perfil1_idx` (`perfil_idperfil` ASC),
-  INDEX `fk_usuario_comunas1_idx` (`comunas_comuna_id` ASC),
-  CONSTRAINT `fk_usuario_perfil1`
-    FOREIGN KEY (`perfil_idperfil`)
-    REFERENCES `cgg`.`perfil` (`idperfil`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_usuario_comunas1`
-    FOREIGN KEY (`comunas_comuna_id`)
-    REFERENCES `cgg`.`comunas` (`comuna_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+  INDEX `fk_usuario_perfil1_idx` (`idperfil` ASC),
+  INDEX `fk_usuario_comunas1_idx` (`comuna_id` ASC)
+  )
 ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `cgg`.`tipodeuda`
@@ -52,6 +80,26 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `cgg`.`tipoCuenta`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`tipoCuenta` (
+  `idtipoCuenta` INT NOT NULL,
+  `descripcion` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`idtipoCuenta`))
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipoIngreso`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `cgg`.`tipoIngreso` (
+  `idtipoIngreso` INT NOT NULL AUTO_INCREMENT,
+  `descripcion` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`idtipoIngreso`))
+ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
 -- Table `cgg`.`deuda`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `cgg`.`deuda` (
@@ -60,9 +108,12 @@ CREATE TABLE IF NOT EXISTS `cgg`.`deuda` (
   `tipodeuda_idtipodeuda` INT NOT NULL,
   `fechaIngreso` DATETIME NOT NULL,
   `estadoDeuda` BIT NOT NULL,
+  `comentario` VARCHAR(45) NULL,
+  `tipoCuenta_idtipoCuenta` INT NOT NULL,
   PRIMARY KEY (`iddeuda`),
   INDEX `fk_deuda_usuario1_idx` (`usuario_rut` ASC),
   INDEX `fk_deuda_tipodeuda1_idx` (`tipodeuda_idtipodeuda` ASC),
+  INDEX `fk_deuda_tipoCuenta1_idx` (`tipoCuenta_idtipoCuenta` ASC),
   CONSTRAINT `fk_deuda_usuario1`
     FOREIGN KEY (`usuario_rut`)
     REFERENCES `cgg`.`usuario` (`rut`)
@@ -72,10 +123,13 @@ CREATE TABLE IF NOT EXISTS `cgg`.`deuda` (
     FOREIGN KEY (`tipodeuda_idtipodeuda`)
     REFERENCES `cgg`.`tipodeuda` (`idtipodeuda`)
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_deuda_tipoCuenta1`
+    FOREIGN KEY (`tipoCuenta_idtipoCuenta`)
+    REFERENCES `cgg`.`tipoCuenta` (`idtipoCuenta`)
+    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-
 -- -----------------------------------------------------
 -- Table `cgg`.`detalledeuda`
 -- -----------------------------------------------------
@@ -95,16 +149,6 @@ CREATE TABLE IF NOT EXISTS `cgg`.`detalledeuda` (
     REFERENCES `cgg`.`deuda` (`iddeuda`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `cgg`.`tipoIngreso`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `cgg`.`tipoIngreso` (
-  `idtipoIngreso` INT NOT NULL AUTO_INCREMENT,
-  `descripcion` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`idtipoIngreso`))
 ENGINE = InnoDB;
 
 
@@ -131,30 +175,7 @@ CREATE TABLE IF NOT EXISTS `cgg`.`ingreso` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
--- 
--- Comunas
---
-CREATE TABLE IF NOT EXISTS `cgg`.`comunas`
-(
-  `comuna_id` int(11) NOT NULL AUTO_INCREMENT,
-  `comuna_nombre` varchar(64) NOT NULL,
-  `provincia_id` int(11) NOT NULL,
-  PRIMARY KEY (`comuna_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=346 DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `cgg`.`provincias` (
-  `provincia_id` int(11) NOT NULL AUTO_INCREMENT,
-  `provincia_nombre` varchar(64) NOT NULL,
-  `region_id` int(11) NOT NULL,
-  PRIMARY KEY (`provincia_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=54 DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `cgg`.`regiones` (
-  `region_id` int(11) NOT NULL AUTO_INCREMENT,
-  `region_nombre` varchar(64) NOT NULL,
-  `region_ordinal` varchar(4) NOT NULL,
-  PRIMARY KEY (`region_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=16 DEFAULT CHARSET=utf8;
 
 INSERT INTO `comunas` (`comuna_id`,`comuna_nombre`,`provincia_id`)
 VALUES
@@ -583,3 +604,36 @@ VALUES
 	(13,'Los Lagos','X'),
 	(14,'Aisén del General Carlos Ibáñez del Campo','XI'),
 	(15,'Magallanes y de la Antártica Chilena','XII');
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipodeuda`
+-- -----------------------------------------------------
+INSERT INTO `cgg`.`tipodeuda` (`idtipodeuda`, `descripcion`) VALUES (1, "Credito");
+INSERT INTO `cgg`.`tipodeuda` (`idtipodeuda`, `descripcion`) VALUES (2, "Mensual");
+
+
+-- -----------------------------------------------------
+-- Table `cgg`.`perfil`
+-- -----------------------------------------------------
+INSERT INTO `cgg`.`perfil` (`idperfil`, `descripcion`) VALUES (1, "Administrador");
+INSERT INTO `cgg`.`perfil` (`idperfil`, `descripcion`) VALUES (2, "Usuario");
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipoCuenta`
+-- -----------------------------------------------------
+INSERT INTO `cgg`.`tipoCuenta` (`idtipoCuenta`, `descripcion`) VALUES (1, "Luz");
+INSERT INTO `cgg`.`tipoCuenta` (`idtipoCuenta`, `descripcion`) VALUES (2, "Agua");
+INSERT INTO `cgg`.`tipoCuenta` (`idtipoCuenta`, `descripcion`) VALUES (3, "Gas");
+INSERT INTO `cgg`.`tipoCuenta` (`idtipoCuenta`, `descripcion`) VALUES (4, "Otro");
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipoCuenta`
+-- -----------------------------------------------------
+INSERT INTO `cgg`.`tipoIngreso` (`idtipoIngreso`, `descripcion`) VALUES (1, "Fijo");
+INSERT INTO `cgg`.`tipoIngreso` (`idtipoIngreso`, `descripcion`) VALUES (2, "Variable");
+
+-- -----------------------------------------------------
+-- Table `cgg`.`tipoCuenta`
+-- -----------------------------------------------------
+INSERT INTO `cgg`.`usuario` (`rut`, `pass`, `nombre`, `apellido_paterno`, `apellido_materno`, `direccion`, `numCasa`, `idperfil`, `comuna_id`, `activo`) VALUES (17953813, "1795", "Rodrigo", "Gallardo", "Juarez", "Dgo tocornal 01313", 13, 1, 86, 1);
